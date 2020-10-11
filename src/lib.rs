@@ -1,19 +1,22 @@
-use std::mem::MaybeUninit;
 use std::collections::HashMap;
+use std::mem::MaybeUninit;
 
 use byteorder::{ByteOrder, LittleEndian};
-use thiserror::Error;
 use korg_syro_sys as syro;
+use thiserror::Error;
 
 #[derive(Error, Debug, PartialEq)]
 pub enum SyroError {
     #[error("invalid value {val} for '{name}', expected at least {} and at most {}", .lo, .hi)]
-    OutOfBounds { val: u32, name: &'static str, lo: usize, hi: usize },
+    OutOfBounds {
+        val: u32,
+        name: &'static str,
+        lo: usize,
+        hi: usize,
+    },
 
     #[error("unhandled SyroStatus {status:?}")]
-    SyroStatus {
-        status: syro::SyroStatus
-    }
+    SyroStatus { status: syro::SyroStatus },
 }
 
 fn check_syro_status(status: syro::SyroStatus) -> Result<(), SyroError> {
@@ -28,18 +31,24 @@ fn check_syro_status(status: syro::SyroStatus) -> Result<(), SyroError> {
         // SyroStatus::Status_NotEnoughMemory
         // SyroStatus::Status_InvalidHandle
         // SyroStatus::Status_NoData
-        _ => Err(SyroError::SyroStatus {status})
+        _ => Err(SyroError::SyroStatus { status }),
     }
 }
 
 // Encapsulates ownership of SyroData
 struct SyroDataBundle {
     data: Vec<u8>,
-    syro_data: syro::SyroData
+    syro_data: syro::SyroData,
 }
 
 impl SyroDataBundle {
-    fn sample(index: u32, data_type: syro::SyroDataType, mut data: Vec<u8>, sample_rate: u32, bit_depth: u32) -> Self {
+    fn sample(
+        index: u32,
+        data_type: syro::SyroDataType,
+        mut data: Vec<u8>,
+        sample_rate: u32,
+        bit_depth: u32,
+    ) -> Self {
         let syro_data = syro::SyroData {
             DataType: data_type,
             pData: data.as_mut_ptr(),
@@ -53,10 +62,7 @@ impl SyroDataBundle {
             SampleEndian: korg_syro_sys::Endian::LittleEndian,
         };
 
-        Self {
-            data,
-            syro_data,
-        }
+        Self { data, syro_data }
     }
 
     fn erase(index: u32) -> Self {
@@ -87,10 +93,7 @@ impl SyroDataBundle {
             SampleEndian: korg_syro_sys::Endian::LittleEndian,
         };
 
-        Self {
-            data,
-            syro_data,
-        }
+        Self { data, syro_data }
     }
 
     fn reset_compressed(mut data: Vec<u8>, bit_depth: u32) -> Self {
@@ -104,10 +107,7 @@ impl SyroDataBundle {
             SampleEndian: korg_syro_sys::Endian::LittleEndian,
         };
 
-        Self {
-            data,
-            syro_data,
-        }
+        Self { data, syro_data }
     }
 
     fn data(&self) -> syro::SyroData {
@@ -117,13 +117,18 @@ impl SyroDataBundle {
 
 #[derive(Default)]
 pub struct SyroStream {
-    bundles: HashMap<u32, SyroDataBundle>
+    bundles: HashMap<u32, SyroDataBundle>,
 }
 
 const INDEX_ERROR_NAME: &'static str = "index";
 fn check_sample_index(index: u32) -> Result<(), SyroError> {
     if index > 99 {
-        return Err(SyroError::OutOfBounds { val: index, name: INDEX_ERROR_NAME, lo: 0, hi: 99 })
+        return Err(SyroError::OutOfBounds {
+            val: index,
+            name: INDEX_ERROR_NAME,
+            lo: 0,
+            hi: 99,
+        });
     }
     Ok(())
 }
@@ -131,7 +136,12 @@ fn check_sample_index(index: u32) -> Result<(), SyroError> {
 const BIT_DEPTH_ERROR_NAME: &'static str = "bit_depth";
 fn check_bit_depth(bit_depth: u32) -> Result<(), SyroError> {
     if bit_depth < 8 || bit_depth > 16 {
-        return Err(SyroError::OutOfBounds { val: bit_depth, name: BIT_DEPTH_ERROR_NAME, lo: 8, hi: 16 })
+        return Err(SyroError::OutOfBounds {
+            val: bit_depth,
+            name: BIT_DEPTH_ERROR_NAME,
+            lo: 8,
+            hi: 16,
+        });
     }
     Ok(())
 }
@@ -143,7 +153,6 @@ fn convert_data(data: Vec<i16>) -> Vec<u8> {
 }
 
 impl SyroStream {
-
     // FIXME currently super slow, probably due to unnecessary copying
     // Factory-reset from .alldata file
     pub fn reset(data: Vec<u8>, compression: Option<u32>) -> Result<Vec<i16>, SyroError> {
@@ -151,7 +160,9 @@ impl SyroStream {
         match compression {
             Some(bit_depth) => {
                 check_bit_depth(bit_depth)?;
-                syro_stream.bundles.insert(0, SyroDataBundle::reset_compressed(data, bit_depth));
+                syro_stream
+                    .bundles
+                    .insert(0, SyroDataBundle::reset_compressed(data, bit_depth));
             }
             None => {
                 syro_stream.bundles.insert(0, SyroDataBundle::reset(data));
@@ -160,15 +171,33 @@ impl SyroStream {
         syro_stream.generate()
     }
 
-    pub fn add_sample(&mut self, index: u32, data: Vec<i16>, sample_rate: u32, compression: Option<u32>) -> Result<&Self, SyroError> {
+    pub fn add_sample(
+        &mut self,
+        index: u32,
+        data: Vec<i16>,
+        sample_rate: u32,
+        compression: Option<u32>,
+    ) -> Result<&Self, SyroError> {
         check_sample_index(index)?;
         let data = convert_data(data);
         let bundle = match compression {
             Some(bit_depth) => {
                 check_bit_depth(bit_depth)?;
-                SyroDataBundle::sample(index, syro::SyroDataType::DataType_Sample_Compress, data, sample_rate, bit_depth)
-            },
-            None => SyroDataBundle::sample(index, syro::SyroDataType::DataType_Sample_Liner, data, sample_rate, 0),
+                SyroDataBundle::sample(
+                    index,
+                    syro::SyroDataType::DataType_Sample_Compress,
+                    data,
+                    sample_rate,
+                    bit_depth,
+                )
+            }
+            None => SyroDataBundle::sample(
+                index,
+                syro::SyroDataType::DataType_Sample_Liner,
+                data,
+                sample_rate,
+                0,
+            ),
         };
         self.bundles.insert(index, bundle);
         Ok(self)
@@ -181,9 +210,7 @@ impl SyroStream {
     }
 
     pub fn generate(self) -> Result<Vec<i16>, SyroError> {
-        let data: Vec<syro::SyroData> = self.bundles.iter()
-            .map(|(_, v)| v.data())
-            .collect();
+        let data: Vec<syro::SyroData> = self.bundles.iter().map(|(_, v)| v.data()).collect();
 
         // unsafe territory
         let syro_stream = {
@@ -200,7 +227,7 @@ fn init_syro_handle(mut data: Vec<syro::SyroData>) -> Result<(syro::SyroHandle, 
     let mut num_frames = 0;
 
     let handle: syro::SyroHandle = unsafe {
-        let mut handle: MaybeUninit::<syro::SyroHandle> = MaybeUninit::uninit();
+        let mut handle: MaybeUninit<syro::SyroHandle> = MaybeUninit::uninit();
 
         let status = syro::SyroVolcaSample_Start(
             handle.as_mut_ptr(),
@@ -241,7 +268,7 @@ fn generate_syro_stream(handle: syro::SyroHandle, num_frames: u32) -> Result<Vec
                         Err(SyroError::SyroStatus { status })
                     }
                 }
-                result => result
+                result => result,
             }?;
         }
         buffer.push(left);
@@ -259,8 +286,11 @@ mod tests {
     // 0.5 second sine wave
     fn sine_wave() -> Vec<i16> {
         let mut wf = waver::Waveform::<i16>::new(44100.0);
-        wf.superpose(waver::Wave { frequency: 440.0, ..Default::default() })
-            .normalize_amplitudes();
+        wf.superpose(waver::Wave {
+            frequency: 440.0,
+            ..Default::default()
+        })
+        .normalize_amplitudes();
         wf.iter().take(22050).collect()
     }
 
@@ -269,7 +299,15 @@ mod tests {
         let mut syro_stream = SyroStream::default();
         let result = syro_stream.add_sample(100, vec![], 44100, None);
         assert!(result.is_err());
-        assert_eq!(result.err().unwrap(), SyroError::OutOfBounds { val: 100, name: "index".into(), lo: 0, hi: 99});
+        assert_eq!(
+            result.err().unwrap(),
+            SyroError::OutOfBounds {
+                val: 100,
+                name: "index".into(),
+                lo: 0,
+                hi: 99
+            }
+        );
     }
 
     #[test]
