@@ -1,3 +1,6 @@
+//!
+//! Rust bindings for the [KORG SYRO](https://github.com/korginc/volcasample) library for the Volca Sample.
+//!
 use std::collections::HashMap;
 use std::mem::MaybeUninit;
 
@@ -115,6 +118,39 @@ impl SyroDataBundle {
     }
 }
 
+/// Builder struct for syrostream data.
+///
+/// Output from the [generate](SyroStream::generate) or
+/// [reset](SyroStream::reset) methods is uncompressed PCM
+/// data that can be used to write a .wav file.
+///
+///
+/// Files for use with the [reset](SyroStream::reset) method
+/// can be found here:
+///
+/// [https://github.com/korginc/volcasample/tree/master/alldata](https://github.com/korginc/volcasample/tree/master/alldata)
+///
+/// # Example
+///
+/// ```rust
+/// use std::io::BufWriter;
+/// use korg_syro::SyroStream;
+/// use wav;
+///
+/// let mut syro_stream = SyroStream::default();
+///
+/// syro_stream
+///     .add_sample(0, vec![], 44100, None)?
+///     .erase_sample(1)?;
+/// let data = syro_stream.generate()?;
+///
+/// // PCM data, 2 channels, 44.1kHz sample rate, 16 bit per sample
+/// let header = wav::Header::new(1, 2, 44100, 16);
+///
+/// let mut output = BufWriter::new(vec![]);
+/// wav::write(header, wav::BitDepth::Sixteen(data), &mut output);
+/// # Ok::<(), korg_syro::SyroError>(())
+/// ```
 #[derive(Default)]
 pub struct SyroStream {
     bundles: HashMap<u32, SyroDataBundle>,
@@ -153,8 +189,7 @@ fn convert_data(data: Vec<i16>) -> Vec<u8> {
 }
 
 impl SyroStream {
-    // FIXME currently super slow, probably due to unnecessary copying
-    // Factory-reset from .alldata file
+    /// Generate stream from a .alldata file
     pub fn reset(data: Vec<u8>, compression: Option<u32>) -> Result<Vec<i16>, SyroError> {
         let mut syro_stream = Self::default();
         match compression {
@@ -171,13 +206,17 @@ impl SyroStream {
         syro_stream.generate()
     }
 
+    /// Add a sample at the given index
+    ///
+    /// The index must be in the range 0-99. If compression is desired it has to
+    /// be in the range of 8-16 bits.
     pub fn add_sample(
         &mut self,
         index: u32,
         data: Vec<i16>,
         sample_rate: u32,
         compression: Option<u32>,
-    ) -> Result<&Self, SyroError> {
+    ) -> Result<&mut Self, SyroError> {
         check_sample_index(index)?;
         let data = convert_data(data);
         let bundle = match compression {
@@ -203,12 +242,18 @@ impl SyroStream {
         Ok(self)
     }
 
-    pub fn erase_sample(&mut self, index: u32) -> Result<&Self, SyroError> {
+    /// Erase the sample at the given index
+    ///
+    /// The index must be in the range 0-99
+    pub fn erase_sample(&mut self, index: u32) -> Result<&mut Self, SyroError> {
         check_sample_index(index)?;
         self.bundles.insert(index, SyroDataBundle::erase(index));
         Ok(self)
     }
 
+    /// Generates the syro stream
+    ///
+    /// Ouptut is uncompressed PCM data
     pub fn generate(self) -> Result<Vec<i16>, SyroError> {
         let data: Vec<syro::SyroData> = self.bundles.iter().map(|(_, v)| v.data()).collect();
 

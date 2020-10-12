@@ -7,6 +7,8 @@ library for the Volca Sample.
 
 ## TODO
 
+* Patterns
+
 * Limit number of operations
     > To send multiple data, create an array of SyroData structures and set the above information for each one. A maximum of 110 SyroData structures can be transferred in one operation.
 
