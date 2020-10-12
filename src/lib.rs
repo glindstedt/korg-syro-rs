@@ -258,18 +258,11 @@ fn generate_syro_stream(handle: syro::SyroHandle, num_frames: u32) -> Result<Vec
     for _ in 0..num_frames {
         unsafe {
             let status = syro::SyroVolcaSample_GetSample(handle, &mut left, &mut right);
-            // TODO investigate why GetSample keeps throwing NoData
-            match check_syro_status(status) {
-                Err(SyroError::SyroStatus { status }) => {
-                    if status == syro::SyroStatus::Status_NoData {
-                        // ignore NoData as it seems normal?
-                        Ok(())
-                    } else {
-                        Err(SyroError::SyroStatus { status })
-                    }
-                }
-                result => result,
-            }?;
+            if status == syro::SyroStatus::Status_NoData {
+                // TODO investigate why GetSample keeps returning NoData and if it's ok
+            } else {
+                check_syro_status(status)?;
+            }
         }
         buffer.push(left);
         buffer.push(right);
