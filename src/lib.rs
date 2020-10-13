@@ -1,6 +1,55 @@
 //!
 //! Rust bindings for the [KORG SYRO](https://github.com/korginc/volcasample) library for the Volca Sample.
 //!
+//!
+//! Files for use with the [reset](SyroStream::reset) method
+//! can be found here:
+//!
+//! [https://github.com/korginc/volcasample/tree/master/alldata](https://github.com/korginc/volcasample/tree/master/alldata)
+//!
+//! # Examples
+//!
+//! Add/erase samples
+//!
+//! ```no_run
+//! use std::fs::File;
+//! use std::io::BufWriter;
+//! use korg_syro::SyroStream;
+//! use wav;
+//!
+//! let mut syro_stream = SyroStream::default();
+//!
+//! syro_stream
+//!     .add_sample(0, vec![], 44100, None)?
+//!     .erase_sample(1)?;
+//! let data = syro_stream.generate()?;
+//!
+//! // PCM data, 2 channels, 44.1kHz sample rate, 16 bit per sample
+//! let header = wav::Header::new(1, 2, 44100, 16);
+//!
+//! let output = File::create("output.wav").unwrap();
+//! wav::write(header, wav::BitDepth::Sixteen(data), &mut BufWriter::new(output));
+//! # Ok::<(), korg_syro::SyroError>(())
+//! ```
+//!
+//! Reset from .alldata file
+//!
+//! ```no_run
+//! use std::fs::File;
+//! use std::io::BufWriter;
+//! use korg_syro::SyroStream;
+//! use wav;
+//!
+//! let input_data = std::fs::read("all_sample_preset.alldata").unwrap();
+//! let data = SyroStream::reset(input_data, Some(16))?;
+//!
+//! // PCM data, 2 channels, 44.1kHz sample rate, 16 bit per sample
+//! let header = wav::Header::new(1, 2, 44100, 16);
+//!
+//! let output = File::create("output.wav").unwrap();
+//! wav::write(header, wav::BitDepth::Sixteen(data), &mut BufWriter::new(output));
+//! # Ok::<(), korg_syro::SyroError>(())
+//! ```
 use std::collections::HashMap;
 use std::mem::MaybeUninit;
 
@@ -40,6 +89,7 @@ fn check_syro_status(status: syro::SyroStatus) -> Result<(), SyroError> {
 
 // Encapsulates ownership of SyroData
 struct SyroDataBundle {
+    #[allow(dead_code)]
     data: Vec<u8>,
     syro_data: syro::SyroData,
 }
@@ -123,34 +173,6 @@ impl SyroDataBundle {
 /// Output from the [generate](SyroStream::generate) or
 /// [reset](SyroStream::reset) methods is uncompressed PCM
 /// data that can be used to write a .wav file.
-///
-///
-/// Files for use with the [reset](SyroStream::reset) method
-/// can be found here:
-///
-/// [https://github.com/korginc/volcasample/tree/master/alldata](https://github.com/korginc/volcasample/tree/master/alldata)
-///
-/// # Example
-///
-/// ```rust
-/// use std::io::BufWriter;
-/// use korg_syro::SyroStream;
-/// use wav;
-///
-/// let mut syro_stream = SyroStream::default();
-///
-/// syro_stream
-///     .add_sample(0, vec![], 44100, None)?
-///     .erase_sample(1)?;
-/// let data = syro_stream.generate()?;
-///
-/// // PCM data, 2 channels, 44.1kHz sample rate, 16 bit per sample
-/// let header = wav::Header::new(1, 2, 44100, 16);
-///
-/// let mut output = BufWriter::new(vec![]);
-/// wav::write(header, wav::BitDepth::Sixteen(data), &mut output);
-/// # Ok::<(), korg_syro::SyroError>(())
-/// ```
 #[derive(Default)]
 pub struct SyroStream {
     bundles: HashMap<u32, SyroDataBundle>,
@@ -210,6 +232,8 @@ impl SyroStream {
     ///
     /// The index must be in the range 0-99. If compression is desired it has to
     /// be in the range of 8-16 bits.
+    ///
+    ///_**Note**: there are currently no guards against using samples that are too large._
     pub fn add_sample(
         &mut self,
         index: u32,
@@ -357,7 +381,7 @@ mod tests {
         syro_stream.add_sample(0, input_data, 44100, None)?;
         syro_stream.erase_sample(1)?;
 
-        let output = syro_stream.generate()?;
+        let _output = syro_stream.generate()?;
         Ok(())
     }
 }

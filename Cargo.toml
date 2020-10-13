@@ -1,8 +1,14 @@
 [package]
 name = "korg-syro"
+description = "Rust bindings for the KORG SYRO library for interacting with the Volca Sample"
+documentation = "https://docs.rs/korg-syro"
+repository = "https://github.com/glindstedt/korg-syro"
+license = "LGPL-3.0-or-later"
 version = "0.1.0"
 authors = ["Gustaf Lindstedt <gustaflindstedt@protonmail.com>"]
 edition = "2018"
+keywords = ["audio", "bindings"]
+categories = ["multimedia::audio", "api-bindings"]
 
 [dependencies]
 byteorder = "1.3.4"
