@@ -11,6 +11,7 @@ keywords = ["audio", "bindings"]
 categories = ["multimedia::audio", "api-bindings"]
 
 [dependencies]
+array-init = "1.0"
 byteorder = "1.3.4"
 korg-syro-sys = { git = "https://github.com/glindstedt/korg-syro-sys", branch = "master" }
 num_enum = "0.5"

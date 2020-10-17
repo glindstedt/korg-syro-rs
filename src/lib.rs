@@ -50,9 +50,9 @@
 //! wav::write(header, wav::BitDepth::Sixteen(data), &mut BufWriter::new(output));
 //! # Ok::<(), korg_syro::SyroError>(())
 //! ```
-use std::collections::HashMap;
 use std::mem::MaybeUninit;
 
+use array_init;
 use byteorder::{ByteOrder, LittleEndian};
 use korg_syro_sys as syro;
 use thiserror::Error;
@@ -196,10 +196,18 @@ impl SyroDataBundle {
 /// Output from the [generate](SyroStream::generate) or
 /// [reset](SyroStream::reset) methods is uncompressed PCM
 /// data that can be used to write a .wav file.
-#[derive(Default)]
 pub struct SyroStream {
-    bundles: HashMap<u32, SyroDataBundle>,
+    samples: [Option<SyroDataBundle>; 100],
     patterns: [Option<SyroDataBundle>; 10],
+}
+
+impl Default for SyroStream {
+    fn default() -> Self {
+        Self {
+            samples: array_init::array_init(|_| None),
+            patterns: array_init::array_init(|_| None),
+        }
+    }
 }
 
 fn convert_data(data: Vec<i16>) -> Vec<u8> {
@@ -212,16 +220,20 @@ impl SyroStream {
     /// Generate stream from a .alldata file
     pub fn reset(data: Vec<u8>, compression: Option<u32>) -> Result<Vec<i16>, SyroError> {
         let mut syro_stream = Self::default();
-        match compression {
+        let syro_data_bundle = match compression {
             Some(bit_depth) => {
                 check_bit_depth(bit_depth)?;
-                syro_stream
-                    .bundles
-                    .insert(0, SyroDataBundle::reset_compressed(data, bit_depth));
+                SyroDataBundle::reset_compressed(data, bit_depth)
             }
             None => {
-                syro_stream.bundles.insert(0, SyroDataBundle::reset(data));
+                SyroDataBundle::reset(data)
             }
+        };
+        match syro_stream.samples.get_mut(0) {
+            Some(elem) => {
+                *elem = Some(syro_data_bundle);
+            }
+            None => unreachable!()
         }
         syro_stream.generate()
     }
@@ -260,7 +272,12 @@ impl SyroStream {
                 0,
             ),
         };
-        self.bundles.insert(index, bundle);
+        match self.samples.get_mut(index as usize) {
+            Some(elem) => {
+                *elem = Some(bundle)
+            }
+            None => panic!("Index out of bounds, checking must have failed")
+        }
         Ok(self)
     }
 
@@ -269,7 +286,13 @@ impl SyroStream {
     /// The index must be in the range 0-99
     pub fn erase_sample(&mut self, index: u32) -> Result<&mut Self, SyroError> {
         check_sample_index(index)?;
-        self.bundles.insert(index, SyroDataBundle::erase(index));
+        // TODO maybe refactor to remove the check function and just throw on None
+        match self.samples.get_mut(index as usize) {
+            Some(elem) => {
+                *elem = Some(SyroDataBundle::erase(index))
+            }
+            None => panic!("Index out of bounds, checking must have failed")
+        }
         Ok(self)
     }
 
@@ -293,7 +316,13 @@ impl SyroStream {
     ///
     /// Ouptut is uncompressed PCM data
     pub fn generate(self) -> Result<Vec<i16>, SyroError> {
-        let mut data: Vec<syro::SyroData> = self.bundles.iter().map(|(_, v)| v.data()).collect();
+        let mut data: Vec<syro::SyroData> = Vec::with_capacity(110);
+
+        for sample in self.samples.iter() {
+            if let Some(bundle) = sample {
+                data.push(bundle.data());
+            }
+        }
 
         for pattern in self.patterns.iter() {
             if let Some(bundle) = pattern {
