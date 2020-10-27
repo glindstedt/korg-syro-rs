@@ -160,6 +160,11 @@ max_check!(starting_point, 127);
 max_check!(length, 127);
 max_check!(hi_cut, 127);
 
+// there's two valid ranges for speed
+fn check_speed(speed: u32) -> Result<(), SyroError> {
+    check_speed_semitone(speed as u32).or(check_speed_continuous(speed as u32))
+}
+
 /// Defines a part of a sequence pattern
 #[derive(Copy, Clone, Debug)]
 pub struct Part {
@@ -232,7 +237,153 @@ impl Part {
     impl_param!(hi_cut);
 
     pub fn speed(&mut self, speed: u8) -> Result<&mut Self, SyroError> {
-        check_speed_semitone(speed as u32).or(check_speed_continuous(speed as u32))?;
+        check_speed(speed as u32)?;
+        Ok(self)
+    }
+
+    /// Valid values in the sequence are 0-127
+    pub fn level_start_motion_seq(&mut self, sequence: [u8; 16]) -> Result<&mut Self, SyroError> {
+        sequence
+            .iter()
+            .map(|&v| check_level(v as u32))
+            .collect::<Result<(), SyroError>>()?;
+        self.data.Motion[korg_syro_sys::VOLCASAMPLE_MOTION_LEVEL_0 as usize] = sequence;
+        Ok(self)
+    }
+
+    /// Valid values in the sequence are 0-127
+    pub fn level_end_motion_seq(&mut self, sequence: [u8; 16]) -> Result<&mut Self, SyroError> {
+        sequence
+            .iter()
+            .map(|&v| check_level(v as u32))
+            .collect::<Result<(), SyroError>>()?;
+        self.data.Motion[korg_syro_sys::VOLCASAMPLE_MOTION_LEVEL_1 as usize] = sequence;
+        Ok(self)
+    }
+
+    /// Valid values in the sequence are 1-127
+    pub fn pan_start_motion_seq(&mut self, sequence: [u8; 16]) -> Result<&mut Self, SyroError> {
+        sequence
+            .iter()
+            .map(|&v| check_pan(v as u32))
+            .collect::<Result<(), SyroError>>()?;
+        self.data.Motion[korg_syro_sys::VOLCASAMPLE_MOTION_PAN_0 as usize] = sequence;
+        Ok(self)
+    }
+
+    /// Valid values in the sequence are 1-127
+    pub fn pan_end_motion_seq(&mut self, sequence: [u8; 16]) -> Result<&mut Self, SyroError> {
+        sequence
+            .iter()
+            .map(|&v| check_pan(v as u32))
+            .collect::<Result<(), SyroError>>()?;
+        self.data.Motion[korg_syro_sys::VOLCASAMPLE_MOTION_PAN_1 as usize] = sequence;
+        Ok(self)
+    }
+
+    /// Valid values in the sequence are 40-88 for semitones, and 129-255 for continuous
+    pub fn speed_start_motion_seq(&mut self, sequence: [u8; 16]) -> Result<&mut Self, SyroError> {
+        sequence
+            .iter()
+            .map(|&v| check_speed(v as u32))
+            .collect::<Result<(), SyroError>>()?;
+        self.data.Motion[korg_syro_sys::VOLCASAMPLE_MOTION_SPEED_0 as usize] = sequence;
+        Ok(self)
+    }
+
+    /// Valid values in the sequence are 40-88 for semitones, and 129-255 for continuous
+    pub fn speed_end_motion_seq(&mut self, sequence: [u8; 16]) -> Result<&mut Self, SyroError> {
+        sequence
+            .iter()
+            .map(|&v| check_speed(v as u32))
+            .collect::<Result<(), SyroError>>()?;
+        self.data.Motion[korg_syro_sys::VOLCASAMPLE_MOTION_SPEED_1 as usize] = sequence;
+        Ok(self)
+    }
+
+    /// Valid values in the sequence are 0-127
+    pub fn amp_eg_attack_motion_seq(&mut self, sequence: [u8; 16]) -> Result<&mut Self, SyroError> {
+        sequence
+            .iter()
+            .map(|&v| check_amp_eg_attack(v as u32))
+            .collect::<Result<(), SyroError>>()?;
+        self.data.Motion[korg_syro_sys::VOLCASAMPLE_MOTION_AMPEG_ATTACK as usize] = sequence;
+        Ok(self)
+    }
+
+    /// Valid values in the sequence are 0-127
+    pub fn amp_eg_decay_motion_seq(&mut self, sequence: [u8; 16]) -> Result<&mut Self, SyroError> {
+        sequence
+            .iter()
+            .map(|&v| check_amp_eg_decay(v as u32))
+            .collect::<Result<(), SyroError>>()?;
+        self.data.Motion[korg_syro_sys::VOLCASAMPLE_MOTION_AMPEG_DECAY as usize] = sequence;
+        Ok(self)
+    }
+
+    /// Valid values in the sequence are 1-127
+    pub fn pitch_eg_int_motion_seq(&mut self, sequence: [u8; 16]) -> Result<&mut Self, SyroError> {
+        sequence
+            .iter()
+            .map(|&v| check_pitch_eg_int(v as u32))
+            .collect::<Result<(), SyroError>>()?;
+        self.data.Motion[korg_syro_sys::VOLCASAMPLE_MOTION_PITCHEG_INT as usize] = sequence;
+        Ok(self)
+    }
+
+    /// Valid values in the sequence are 0-127
+    pub fn pitch_eg_attack_motion_seq(
+        &mut self,
+        sequence: [u8; 16],
+    ) -> Result<&mut Self, SyroError> {
+        sequence
+            .iter()
+            .map(|&v| check_pitch_eg_attack(v as u32))
+            .collect::<Result<(), SyroError>>()?;
+        self.data.Motion[korg_syro_sys::VOLCASAMPLE_MOTION_PITCHEG_ATTACK as usize] = sequence;
+        Ok(self)
+    }
+
+    /// Valid values in the sequence are 0-127
+    pub fn pitch_eg_decay_motion_seq(
+        &mut self,
+        sequence: [u8; 16],
+    ) -> Result<&mut Self, SyroError> {
+        sequence
+            .iter()
+            .map(|&v| check_pitch_eg_decay(v as u32))
+            .collect::<Result<(), SyroError>>()?;
+        self.data.Motion[korg_syro_sys::VOLCASAMPLE_MOTION_PITCHEG_DECAY as usize] = sequence;
+        Ok(self)
+    }
+
+    /// Valid values in the sequence are 0-127
+    pub fn start_point_motion_seq(&mut self, sequence: [u8; 16]) -> Result<&mut Self, SyroError> {
+        sequence
+            .iter()
+            .map(|&v| check_starting_point(v as u32))
+            .collect::<Result<(), SyroError>>()?;
+        self.data.Motion[korg_syro_sys::VOLCASAMPLE_MOTION_START_POINT as usize] = sequence;
+        Ok(self)
+    }
+
+    /// Valid values in the sequence are 0-127
+    pub fn length_motion_seq(&mut self, sequence: [u8; 16]) -> Result<&mut Self, SyroError> {
+        sequence
+            .iter()
+            .map(|&v| check_length(v as u32))
+            .collect::<Result<(), SyroError>>()?;
+        self.data.Motion[korg_syro_sys::VOLCASAMPLE_MOTION_LENGTH as usize] = sequence;
+        Ok(self)
+    }
+
+    /// Valid values in the sequence are 0-127
+    pub fn hi_cut_motion_seq(&mut self, sequence: [u8; 16]) -> Result<&mut Self, SyroError> {
+        sequence
+            .iter()
+            .map(|&v| check_hi_cut(v as u32))
+            .collect::<Result<(), SyroError>>()?;
+        self.data.Motion[korg_syro_sys::VOLCASAMPLE_MOTION_HICUT as usize] = sequence;
         Ok(self)
     }
 
@@ -304,7 +455,16 @@ mod test {
     }
 
     #[test]
-    fn test_part() -> anyhow::Result<()> {
+    fn test_part_builder() -> anyhow::Result<()> {
+        let motion_seq: [u8; 16] = [
+            1, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120,
+        ];
+        let continuous_speed_motion_seq: [u8; 16] = [
+            129, 137, 145, 153, 161, 169, 177, 185, 193, 201, 209, 217, 225, 233, 241, 249,
+        ];
+        let semitone_speed_motion_seq: [u8; 16] = [
+            40, 43, 46, 49, 52, 55, 58, 61, 64, 67, 70, 73, 76, 79, 82, 85,
+        ];
         let _part = Part::for_sample(0)?
             .with_steps(
                 Steps::builder()
@@ -323,6 +483,20 @@ mod test {
             .starting_point(42)?
             .length(42)?
             .hi_cut(42)?
+            .level_start_motion_seq(motion_seq.clone())?
+            .level_end_motion_seq(motion_seq.clone())?
+            .pan_start_motion_seq(motion_seq.clone())?
+            .pan_end_motion_seq(motion_seq.clone())?
+            .speed_start_motion_seq(continuous_speed_motion_seq.clone())?
+            .speed_end_motion_seq(semitone_speed_motion_seq.clone())?
+            .amp_eg_attack_motion_seq(motion_seq.clone())?
+            .amp_eg_decay_motion_seq(motion_seq.clone())?
+            .pitch_eg_int_motion_seq(motion_seq.clone())?
+            .pitch_eg_attack_motion_seq(motion_seq.clone())?
+            .pitch_eg_decay_motion_seq(motion_seq.clone())?
+            .start_point_motion_seq(motion_seq.clone())?
+            .length_motion_seq(motion_seq.clone())?
+            .hi_cut_motion_seq(motion_seq.clone())?
             .motion(On)
             .looped(On)
             .reverb(On)

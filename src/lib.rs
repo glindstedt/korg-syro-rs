@@ -225,15 +225,13 @@ impl SyroStream {
                 check_bit_depth(bit_depth)?;
                 SyroDataBundle::reset_compressed(data, bit_depth)
             }
-            None => {
-                SyroDataBundle::reset(data)
-            }
+            None => SyroDataBundle::reset(data),
         };
         match syro_stream.samples.get_mut(0) {
             Some(elem) => {
                 *elem = Some(syro_data_bundle);
             }
-            None => unreachable!()
+            None => unreachable!(),
         }
         syro_stream.generate()
     }
@@ -273,10 +271,8 @@ impl SyroStream {
             ),
         };
         match self.samples.get_mut(index as usize) {
-            Some(elem) => {
-                *elem = Some(bundle)
-            }
-            None => panic!("Index out of bounds, checking must have failed")
+            Some(elem) => *elem = Some(bundle),
+            None => panic!("Index out of bounds, checking must have failed"),
         }
         Ok(self)
     }
@@ -288,10 +284,8 @@ impl SyroStream {
         check_sample_index(index)?;
         // TODO maybe refactor to remove the check function and just throw on None
         match self.samples.get_mut(index as usize) {
-            Some(elem) => {
-                *elem = Some(SyroDataBundle::erase(index))
-            }
-            None => panic!("Index out of bounds, checking must have failed")
+            Some(elem) => *elem = Some(SyroDataBundle::erase(index)),
+            None => panic!("Index out of bounds, checking must have failed"),
         }
         Ok(self)
     }
