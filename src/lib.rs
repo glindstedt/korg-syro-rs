@@ -222,7 +222,7 @@ impl SyroStream {
         let mut syro_stream = Self::default();
         let syro_data_bundle = match compression {
             Some(bit_depth) => {
-                check_bit_depth(bit_depth)?;
+                check_bit_depth(bit_depth as u8)?;
                 SyroDataBundle::reset_compressed(data, bit_depth)
             }
             None => SyroDataBundle::reset(data),
@@ -249,11 +249,11 @@ impl SyroStream {
         sample_rate: u32,
         compression: Option<u32>,
     ) -> Result<&mut Self, SyroError> {
-        check_sample_index(index)?;
+        check_sample_index(index as u8)?;
         let data = convert_data(data);
         let bundle = match compression {
             Some(bit_depth) => {
-                check_bit_depth(bit_depth)?;
+                check_bit_depth(bit_depth as u8)?;
                 SyroDataBundle::sample(
                     index,
                     syro::SyroDataType::DataType_Sample_Compress,
@@ -281,7 +281,7 @@ impl SyroStream {
     ///
     /// The index must be in the range 0-99
     pub fn erase_sample(&mut self, index: u32) -> Result<&mut Self, SyroError> {
-        check_sample_index(index)?;
+        check_sample_index(index as u8)?;
         // TODO maybe refactor to remove the check function and just throw on None
         match self.samples.get_mut(index as usize) {
             Some(elem) => *elem = Some(SyroDataBundle::erase(index)),
@@ -298,7 +298,7 @@ impl SyroStream {
         index: usize,
         pattern: pattern::Pattern,
     ) -> Result<&mut Self, SyroError> {
-        pattern::check_pattern_index(index as u32)?;
+        pattern::check_pattern_index(index as u8)?;
         let data = SyroDataBundle::pattern(index as u32, pattern.to_bytes());
         if let Some(elem) = self.patterns.get_mut(index) {
             *elem = Some(data);

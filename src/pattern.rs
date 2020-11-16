@@ -161,8 +161,8 @@ max_check!(length, 127);
 max_check!(hi_cut, 127);
 
 // there's two valid ranges for speed
-fn check_speed(speed: u32) -> Result<(), SyroError> {
-    check_speed_semitone(speed as u32).or(check_speed_continuous(speed as u32))
+fn check_speed(speed: u8) -> Result<(), SyroError> {
+    check_speed_semitone(speed).or(check_speed_continuous(speed))
 }
 
 /// Defines a part of a sequence pattern
@@ -175,7 +175,7 @@ macro_rules! impl_param {
     ($i:ident) => {
         paste! {
             pub fn [<$i>](&mut self, [<$i>]: u8) -> Result<&mut Self, SyroError> {
-                [<check_ $i>]([<$i>] as u32)?;
+                [<check_ $i>]([<$i>])?;
                 Ok(self)
             }
         }
@@ -195,7 +195,7 @@ macro_rules! impl_func_memory_part {
 
 impl Part {
     pub fn for_sample(sample_num: u16) -> Result<Self, SyroError> {
-        check_sample_index(sample_num as u32)?;
+        check_sample_index(sample_num as u8)?;
         let mut data = VolcaSample_Part_Data::default();
         data.SampleNum = sample_num;
 
@@ -237,7 +237,7 @@ impl Part {
     impl_param!(hi_cut);
 
     pub fn speed(&mut self, speed: u8) -> Result<&mut Self, SyroError> {
-        check_speed(speed as u32)?;
+        check_speed(speed)?;
         Ok(self)
     }
 
@@ -245,7 +245,7 @@ impl Part {
     pub fn level_start_motion_seq(&mut self, sequence: [u8; 16]) -> Result<&mut Self, SyroError> {
         sequence
             .iter()
-            .map(|&v| check_level(v as u32))
+            .map(|&v| check_level(v))
             .collect::<Result<(), SyroError>>()?;
         self.data.Motion[korg_syro_sys::VOLCASAMPLE_MOTION_LEVEL_0 as usize] = sequence;
         Ok(self)
@@ -255,7 +255,7 @@ impl Part {
     pub fn level_end_motion_seq(&mut self, sequence: [u8; 16]) -> Result<&mut Self, SyroError> {
         sequence
             .iter()
-            .map(|&v| check_level(v as u32))
+            .map(|&v| check_level(v))
             .collect::<Result<(), SyroError>>()?;
         self.data.Motion[korg_syro_sys::VOLCASAMPLE_MOTION_LEVEL_1 as usize] = sequence;
         Ok(self)
@@ -265,7 +265,7 @@ impl Part {
     pub fn pan_start_motion_seq(&mut self, sequence: [u8; 16]) -> Result<&mut Self, SyroError> {
         sequence
             .iter()
-            .map(|&v| check_pan(v as u32))
+            .map(|&v| check_pan(v))
             .collect::<Result<(), SyroError>>()?;
         self.data.Motion[korg_syro_sys::VOLCASAMPLE_MOTION_PAN_0 as usize] = sequence;
         Ok(self)
@@ -275,7 +275,7 @@ impl Part {
     pub fn pan_end_motion_seq(&mut self, sequence: [u8; 16]) -> Result<&mut Self, SyroError> {
         sequence
             .iter()
-            .map(|&v| check_pan(v as u32))
+            .map(|&v| check_pan(v))
             .collect::<Result<(), SyroError>>()?;
         self.data.Motion[korg_syro_sys::VOLCASAMPLE_MOTION_PAN_1 as usize] = sequence;
         Ok(self)
@@ -285,7 +285,7 @@ impl Part {
     pub fn speed_start_motion_seq(&mut self, sequence: [u8; 16]) -> Result<&mut Self, SyroError> {
         sequence
             .iter()
-            .map(|&v| check_speed(v as u32))
+            .map(|&v| check_speed(v))
             .collect::<Result<(), SyroError>>()?;
         self.data.Motion[korg_syro_sys::VOLCASAMPLE_MOTION_SPEED_0 as usize] = sequence;
         Ok(self)
@@ -295,7 +295,7 @@ impl Part {
     pub fn speed_end_motion_seq(&mut self, sequence: [u8; 16]) -> Result<&mut Self, SyroError> {
         sequence
             .iter()
-            .map(|&v| check_speed(v as u32))
+            .map(|&v| check_speed(v))
             .collect::<Result<(), SyroError>>()?;
         self.data.Motion[korg_syro_sys::VOLCASAMPLE_MOTION_SPEED_1 as usize] = sequence;
         Ok(self)
@@ -305,7 +305,7 @@ impl Part {
     pub fn amp_eg_attack_motion_seq(&mut self, sequence: [u8; 16]) -> Result<&mut Self, SyroError> {
         sequence
             .iter()
-            .map(|&v| check_amp_eg_attack(v as u32))
+            .map(|&v| check_amp_eg_attack(v))
             .collect::<Result<(), SyroError>>()?;
         self.data.Motion[korg_syro_sys::VOLCASAMPLE_MOTION_AMPEG_ATTACK as usize] = sequence;
         Ok(self)
@@ -315,7 +315,7 @@ impl Part {
     pub fn amp_eg_decay_motion_seq(&mut self, sequence: [u8; 16]) -> Result<&mut Self, SyroError> {
         sequence
             .iter()
-            .map(|&v| check_amp_eg_decay(v as u32))
+            .map(|&v| check_amp_eg_decay(v))
             .collect::<Result<(), SyroError>>()?;
         self.data.Motion[korg_syro_sys::VOLCASAMPLE_MOTION_AMPEG_DECAY as usize] = sequence;
         Ok(self)
@@ -325,7 +325,7 @@ impl Part {
     pub fn pitch_eg_int_motion_seq(&mut self, sequence: [u8; 16]) -> Result<&mut Self, SyroError> {
         sequence
             .iter()
-            .map(|&v| check_pitch_eg_int(v as u32))
+            .map(|&v| check_pitch_eg_int(v))
             .collect::<Result<(), SyroError>>()?;
         self.data.Motion[korg_syro_sys::VOLCASAMPLE_MOTION_PITCHEG_INT as usize] = sequence;
         Ok(self)
@@ -338,7 +338,7 @@ impl Part {
     ) -> Result<&mut Self, SyroError> {
         sequence
             .iter()
-            .map(|&v| check_pitch_eg_attack(v as u32))
+            .map(|&v| check_pitch_eg_attack(v))
             .collect::<Result<(), SyroError>>()?;
         self.data.Motion[korg_syro_sys::VOLCASAMPLE_MOTION_PITCHEG_ATTACK as usize] = sequence;
         Ok(self)
@@ -351,7 +351,7 @@ impl Part {
     ) -> Result<&mut Self, SyroError> {
         sequence
             .iter()
-            .map(|&v| check_pitch_eg_decay(v as u32))
+            .map(|&v| check_pitch_eg_decay(v))
             .collect::<Result<(), SyroError>>()?;
         self.data.Motion[korg_syro_sys::VOLCASAMPLE_MOTION_PITCHEG_DECAY as usize] = sequence;
         Ok(self)
@@ -361,7 +361,7 @@ impl Part {
     pub fn start_point_motion_seq(&mut self, sequence: [u8; 16]) -> Result<&mut Self, SyroError> {
         sequence
             .iter()
-            .map(|&v| check_starting_point(v as u32))
+            .map(|&v| check_starting_point(v))
             .collect::<Result<(), SyroError>>()?;
         self.data.Motion[korg_syro_sys::VOLCASAMPLE_MOTION_START_POINT as usize] = sequence;
         Ok(self)
@@ -371,7 +371,7 @@ impl Part {
     pub fn length_motion_seq(&mut self, sequence: [u8; 16]) -> Result<&mut Self, SyroError> {
         sequence
             .iter()
-            .map(|&v| check_length(v as u32))
+            .map(|&v| check_length(v))
             .collect::<Result<(), SyroError>>()?;
         self.data.Motion[korg_syro_sys::VOLCASAMPLE_MOTION_LENGTH as usize] = sequence;
         Ok(self)
@@ -381,7 +381,7 @@ impl Part {
     pub fn hi_cut_motion_seq(&mut self, sequence: [u8; 16]) -> Result<&mut Self, SyroError> {
         sequence
             .iter()
-            .map(|&v| check_hi_cut(v as u32))
+            .map(|&v| check_hi_cut(v))
             .collect::<Result<(), SyroError>>()?;
         self.data.Motion[korg_syro_sys::VOLCASAMPLE_MOTION_HICUT as usize] = sequence;
         Ok(self)
@@ -400,7 +400,7 @@ pub struct Pattern {
 
 impl Pattern {
     pub fn with_part(&mut self, part_index: u8, part: Part) -> Result<&Self, SyroError> {
-        check_part_index(part_index as u32)?;
+        check_part_index(part_index)?;
         self.data.Part[part_index as usize] = part.data;
         Ok(self)
     }
@@ -501,7 +501,9 @@ mod test {
             .looped(On)
             .reverb(On)
             .reverse(On)
-            .mute(Off);
+            .mute(Off)
+            .build();
+
         Ok(())
     }
 
