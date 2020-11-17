@@ -73,6 +73,9 @@ pub enum SyroError {
         hi: usize,
     },
 
+    #[error("empty stream, provide at least one sample or pattern")]
+    EmptyStream,
+
     #[error("unhandled SyroStatus {status:?}")]
     SyroStatus { status: syro::SyroStatus },
 }
@@ -324,6 +327,10 @@ impl SyroStream {
             }
         }
 
+        if data.len() == 0 {
+            return Err(SyroError::EmptyStream);
+        }
+
         // unsafe territory
         let syro_stream = {
             let (handle, num_frames) = init_syro_handle(data)?;
@@ -417,7 +424,17 @@ mod tests {
     }
 
     #[test]
-    fn basic() -> anyhow::Result<(), anyhow::Error> {
+    fn empty_syrostream() {
+        let result = SyroStream::default().generate();
+        assert!(result.is_err());
+        assert_eq!(
+            result.err().unwrap(),
+            SyroError::EmptyStream,
+        );
+    }
+
+    #[test]
+    fn basic() -> anyhow::Result<()> {
         let input_data: Vec<i16> = sine_wave();
 
         let mut syro_stream = SyroStream::default();
