@@ -223,7 +223,19 @@ impl Part {
     impl_func_memory_part!(looped, VOLCASAMPLE_FUNC_LOOP);
     impl_func_memory_part!(reverb, VOLCASAMPLE_FUNC_REVERB);
     impl_func_memory_part!(reverse, VOLCASAMPLE_FUNC_REVERSE);
-    impl_func_memory_part!(mute, VOLCASAMPLE_FUNC_MUTE);
+
+    pub fn mute(&mut self, value: Toggle) -> &mut Self {
+        // apparently mute toggle is reversed
+        match value {
+            Toggle::On => {
+                self.data.FuncMemoryPart &= VOLCASAMPLE_FUNC_MUTE as u8;
+            }
+            Toggle::Off => {
+                self.data.FuncMemoryPart |= !(VOLCASAMPLE_FUNC_MUTE as u8);
+            }
+        }
+        self
+    }
 
     impl_param!(level);
     impl_param!(pan);
