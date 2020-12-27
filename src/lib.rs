@@ -28,7 +28,7 @@
 //! let header = wav::Header::new(1, 2, 44100, 16);
 //!
 //! let output = File::create("output.wav").unwrap();
-//! wav::write(header, wav::BitDepth::Sixteen(data), &mut BufWriter::new(output));
+//! wav::write(header, &wav::BitDepth::Sixteen(data), &mut BufWriter::new(output));
 //! # Ok::<(), korg_syro::SyroError>(())
 //! ```
 //!
@@ -47,7 +47,7 @@
 //! let header = wav::Header::new(1, 2, 44100, 16);
 //!
 //! let output = File::create("output.wav").unwrap();
-//! wav::write(header, wav::BitDepth::Sixteen(data), &mut BufWriter::new(output));
+//! wav::write(header, &wav::BitDepth::Sixteen(data), &mut BufWriter::new(output));
 //! # Ok::<(), korg_syro::SyroError>(())
 //! ```
 use std::mem::MaybeUninit;

@@ -20,5 +20,5 @@ thiserror = "1.0"
 
 [dev-dependencies]
 anyhow = "1.0"
-wav = "0.4.1"
+wav = "0.5"
 waver = "0.1"
