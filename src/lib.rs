@@ -427,10 +427,7 @@ mod tests {
     fn empty_syrostream() {
         let result = SyroStream::default().generate();
         assert!(result.is_err());
-        assert_eq!(
-            result.err().unwrap(),
-            SyroError::EmptyStream,
-        );
+        assert_eq!(result.err().unwrap(), SyroError::EmptyStream);
     }
 
     #[test]

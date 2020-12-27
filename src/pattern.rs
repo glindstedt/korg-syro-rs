@@ -75,7 +75,10 @@
 use korg_syro_sys::{
     VolcaSample_Part_Data, VolcaSample_Pattern_Data, VOLCASAMPLE_FUNC_LOOP,
     VOLCASAMPLE_FUNC_MOTION, VOLCASAMPLE_FUNC_MUTE, VOLCASAMPLE_FUNC_REVERB,
-    VOLCASAMPLE_FUNC_REVERSE,
+    VOLCASAMPLE_FUNC_REVERSE, VOLCASAMPLE_PARAM_AMPEG_ATTACK, VOLCASAMPLE_PARAM_AMPEG_DECAY,
+    VOLCASAMPLE_PARAM_HICUT, VOLCASAMPLE_PARAM_LENGTH, VOLCASAMPLE_PARAM_LEVEL,
+    VOLCASAMPLE_PARAM_PAN, VOLCASAMPLE_PARAM_PITCHEG_ATTACK, VOLCASAMPLE_PARAM_PITCHEG_DECAY,
+    VOLCASAMPLE_PARAM_PITCHEG_INT, VOLCASAMPLE_PARAM_SPEED, VOLCASAMPLE_PARAM_START_POINT,
 };
 pub use num_enum;
 use num_enum::TryFromPrimitive;
@@ -171,17 +174,6 @@ pub struct Part {
     data: VolcaSample_Part_Data,
 }
 
-macro_rules! impl_param {
-    ($i:ident) => {
-        paste! {
-            pub fn [<$i>](&mut self, [<$i>]: u8) -> Result<&mut Self, SyroError> {
-                [<check_ $i>]([<$i>])?;
-                Ok(self)
-            }
-        }
-    };
-}
-
 macro_rules! impl_func_memory_part {
     ($i:ident, $j:ident) => {
         paste! {
@@ -237,19 +229,69 @@ impl Part {
         self
     }
 
-    impl_param!(level);
-    impl_param!(pan);
-    impl_param!(amp_eg_attack);
-    impl_param!(amp_eg_decay);
-    impl_param!(pitch_eg_attack);
-    impl_param!(pitch_eg_int);
-    impl_param!(pitch_eg_decay);
-    impl_param!(starting_point);
-    impl_param!(length);
-    impl_param!(hi_cut);
+    pub fn level(&mut self, level: u8) -> Result<&mut Self, SyroError> {
+        check_level(level)?;
+        self.data.Param[VOLCASAMPLE_PARAM_LEVEL as usize] = level;
+        Ok(self)
+    }
+
+    pub fn pan(&mut self, pan: u8) -> Result<&mut Self, SyroError> {
+        check_pan(pan)?;
+        self.data.Param[VOLCASAMPLE_PARAM_PAN as usize] = pan;
+        Ok(self)
+    }
 
     pub fn speed(&mut self, speed: u8) -> Result<&mut Self, SyroError> {
         check_speed(speed)?;
+        self.data.Param[VOLCASAMPLE_PARAM_SPEED as usize] = speed;
+        Ok(self)
+    }
+
+    pub fn amp_eg_attack(&mut self, amp_eg_attack: u8) -> Result<&mut Self, SyroError> {
+        check_amp_eg_attack(amp_eg_attack)?;
+        self.data.Param[VOLCASAMPLE_PARAM_AMPEG_ATTACK as usize] = amp_eg_attack;
+        Ok(self)
+    }
+
+    pub fn amp_eg_decay(&mut self, amp_eg_decay: u8) -> Result<&mut Self, SyroError> {
+        check_amp_eg_decay(amp_eg_decay)?;
+        self.data.Param[VOLCASAMPLE_PARAM_AMPEG_DECAY as usize] = amp_eg_decay;
+        Ok(self)
+    }
+
+    pub fn pitch_eg_attack(&mut self, pitch_eg_attack: u8) -> Result<&mut Self, SyroError> {
+        check_pitch_eg_attack(pitch_eg_attack)?;
+        self.data.Param[VOLCASAMPLE_PARAM_PITCHEG_ATTACK as usize] = pitch_eg_attack;
+        Ok(self)
+    }
+
+    pub fn pitch_eg_int(&mut self, pitch_eg_int: u8) -> Result<&mut Self, SyroError> {
+        check_pitch_eg_int(pitch_eg_int)?;
+        self.data.Param[VOLCASAMPLE_PARAM_PITCHEG_INT as usize] = pitch_eg_int;
+        Ok(self)
+    }
+
+    pub fn pitch_eg_decay(&mut self, pitch_eg_decay: u8) -> Result<&mut Self, SyroError> {
+        check_pitch_eg_decay(pitch_eg_decay)?;
+        self.data.Param[VOLCASAMPLE_PARAM_PITCHEG_DECAY as usize] = pitch_eg_decay;
+        Ok(self)
+    }
+
+    pub fn starting_point(&mut self, starting_point: u8) -> Result<&mut Self, SyroError> {
+        check_starting_point(starting_point)?;
+        self.data.Param[VOLCASAMPLE_PARAM_START_POINT as usize] = starting_point;
+        Ok(self)
+    }
+
+    pub fn length(&mut self, length: u8) -> Result<&mut Self, SyroError> {
+        check_starting_point(length)?;
+        self.data.Param[VOLCASAMPLE_PARAM_LENGTH as usize] = length;
+        Ok(self)
+    }
+
+    pub fn hi_cut(&mut self, hi_cut: u8) -> Result<&mut Self, SyroError> {
+        check_hi_cut(hi_cut)?;
+        self.data.Param[VOLCASAMPLE_PARAM_HICUT as usize] = hi_cut;
         Ok(self)
     }
 
