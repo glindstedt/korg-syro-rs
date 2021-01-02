@@ -195,7 +195,6 @@ impl Part {
     }
 
     pub fn with_steps(&mut self, steps: Steps) -> &mut Self {
-        println!("Steps: {:?}", steps);
         self.data.StepOn = steps.to_bytes();
         self
     }
