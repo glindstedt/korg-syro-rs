@@ -9,6 +9,9 @@ authors = ["Gustaf Lindstedt <gustaflindstedt@protonmail.com>"]
 edition = "2018"
 keywords = ["audio", "bindings"]
 categories = ["multimedia::audio", "api-bindings"]
+exclude = [
+    ".github",
+]
 
 [dependencies]
 array-init = "1.0"
